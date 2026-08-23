@@ -1,401 +1,656 @@
-import { useState, useRef, useEffect } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Cell, AreaChart, Area } from "recharts";
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+import { useState, useRef } from "react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Cell, AreaChart, Area, CartesianGrid } from "recharts";
 
-const LOAN_AMOUNT = 80000;
-const LOAN_MONTHLY = 1500;
-const LOAN_MONTHS = 60;
-const TARIFF = 0.635;
-const DAILY_CONSUMPTION = 46;
-const SYSTEM_KWP = 22.4;
-const INSTALL_DATE = "2026-07-07";
-const STORAGE_KEY = "solar_daily_log_v4";
-const INTRADAY_KEY = "solar_intraday_v4";
-const SUNRISE = 6;
-const SUNSET = 19.5;
+const LOAN_AMOUNT   = 79800;
+const LOAN_MONTHLY  = 1500;
+const TARIFF_BUY    = 0.635;
+const TARIFF_SELL   = 0.48;
+const MONTHLY_BILL  = 1000;
+const MONTHLY_SOLAR_INCOME = 1652;
+const DAILY_CONS    = 52;
+const SYSTEM_KWP    = 22.4;
+const INSTALL_DATE  = "2026-07-07";
+const TESCO_ANNUAL  = 17741;
+const TESCO_PAYBACK = 4.5;
+const SUNRISE = 6, SUNSET = 19.5;
+const STORAGE_KEY  = "solar_v7_log";
+const INTRADAY_KEY = "solar_v7_intra";
 
-// חישוב שווי יומי לפי מונה חוזר
-function calcDayValue(kwh) {
-  const selfUse = Math.min(kwh, DAILY_CONSUMPTION); // צריכה עצמית
-  const export_ = Math.max(0, kwh - DAILY_CONSUMPTION); // עודף לרשת
-  return (selfUse + export_) * TARIFF; // הכל בתעריף רגיל במונה חוזר
+function calcValue(kwh) {
+  const self = Math.min(kwh, DAILY_CONS);
+  const exp  = Math.max(0, kwh - DAILY_CONS);
+  return self * TARIFF_BUY + exp * TARIFF_SELL;
 }
 
-function loadLog() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; } }
-function saveLog(log) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(log)); } catch {} }
-function loadIntraday() { try { return JSON.parse(localStorage.getItem(INTRADAY_KEY) || "{}"); } catch { return {}; } }
-function saveIntraday(data) { try { localStorage.setItem(INTRADAY_KEY, JSON.stringify(data)); } catch {} }
+function loadLog()      { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)  || "[]"); } catch { return []; } }
+function saveLog(l)     { try { localStorage.setItem(STORAGE_KEY,  JSON.stringify(l)); } catch {} }
+function loadIntra()    { try { return JSON.parse(localStorage.getItem(INTRADAY_KEY) || "{}"); } catch { return {}; } }
+function saveIntra(d)   { try { localStorage.setItem(INTRADAY_KEY, JSON.stringify(d)); } catch {} }
 
-const MONTH_HE = ["ינו","פבר","מרץ","אפר","מאי","יונ","יול","אוג","ספט","אוק","נוב","דצמ"];
-function fmt(n, dec = 0) {
-  if (n == null || isNaN(n) || !isFinite(n)) return "—";
-  return n.toLocaleString("he-IL", { maximumFractionDigits: dec });
-}
-function dateLabel(d) { const dt = new Date(d); return `${dt.getDate()} ${MONTH_HE[dt.getMonth()]}`; }
-function timeLabel(h) {
-  const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
-  return `${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
-}
-function nowHour() { const n = new Date(); return n.getHours() + n.getMinutes() / 60; }
+const MO = ["ינו","פבר","מרץ","אפר","מאי","יונ","יול","אוג","ספט","אוק","נוב","דצמ"];
+const fmt = (n, d=0) => (n == null || isNaN(n) || !isFinite(n)) ? "—" : n.toLocaleString("he-IL",{maximumFractionDigits:d});
+const dlabel = d => { const t=new Date(d); return `${t.getDate()} ${MO[t.getMonth()]}`; };
+const tlabel = h => { const hh=Math.floor(h),mm=Math.round((h-hh)*60); return `${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}`; };
+const nowH   = () => { const n=new Date(); return n.getHours()+n.getMinutes()/60; };
+const sfrac  = h => { if(h<=SUNRISE||h>=SUNSET) return 0; return (1-Math.cos((h-SUNRISE)/(SUNSET-SUNRISE)*Math.PI))/2; };
+const project = readings => {
+  if (!readings?.length) return null;
+  const last = [...readings].sort((a,b)=>a.hour-b.hour)[readings.length-1];
+  const f = sfrac(last.hour);
+  return f<=0 ? null : last.kwh/f;
+};
 
-function solarFraction(h) {
-  if (h <= SUNRISE || h >= SUNSET) return 0;
-  const x = (h - SUNRISE) / (SUNSET - SUNRISE) * Math.PI;
-  return (1 - Math.cos(x)) / 2;
-}
+const dayColor = kwh => kwh >= 100 ? "#00FFB3" : kwh >= 85 ? "#10D98A" : kwh >= 70 ? "#F59E0B" : kwh >= 50 ? "#F97316" : "#EF4444";
+const dayEmoji = kwh => kwh >= 100 ? "😎" : kwh >= 85 ? "✅" : kwh >= 70 ? "🟡" : "🔴";
 
-function projectEndOfDay(readings) {
-  if (!readings || readings.length === 0) return null;
-  const last = [...readings].sort((a, b) => a.hour - b.hour)[readings.length - 1];
-  const frac = solarFraction(last.hour);
-  return frac <= 0 ? null : last.kwh / frac;
-}
-
-const CustomTooltip = ({ active, payload, label }) => {
+const Tip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
-  const kwh = payload.find(p => p.dataKey === "kwh");
+  const kwh = payload.find(p=>p.dataKey==="kwh");
   return (
-    <div style={{ background: "#161616", border: "1px solid #2a2a2a", borderRadius: 10, padding: "10px 14px", fontSize: 12 }}>
-      <div style={{ color: "#888", marginBottom: 4 }}>{label}</div>
-      {kwh && <div style={{ color: "#2ecc71", fontWeight: 600 }}>{fmt(kwh.value, 1)} kWh</div>}
-      {kwh && <div style={{ color: "#f39c12", fontWeight: 600 }}>{fmt(calcDayValue(kwh.value), 1)} ₪</div>}
+    <div style={{background:"#1C2437",border:"1px solid #2a2a2a",borderRadius:10,padding:"10px 14px",fontSize:12,direction:"rtl"}}>
+      <div style={{color:"#8A9BBF",marginBottom:4}}>{label}</div>
+      {kwh && <><div style={{color:dayColor(kwh.value),fontWeight:700}}>{dayEmoji(kwh.value)} {fmt(kwh.value,1)} kWh</div><div style={{color:"#F59E0B",fontWeight:600}}>{fmt(calcValue(kwh.value),1)} ₪</div></>}
     </div>
   );
 };
 
-export default function SolarTracker() {
+export default function App() {
   const today = new Date().toISOString().split("T")[0];
   const [log, setLog] = useState(() => {
     const ex = loadLog();
-    if (ex.length === 0) {
-      const seed = [{ date: "2026-08-13", kwh: 80 }, { date: "2026-08-14", kwh: 93.3 }, { date: "2026-08-15", kwh: 18.3 }];
-      saveLog(seed); return seed;
-    }
-    return ex;
+    if (ex.length) return ex;
+    const seed = [{date:"2026-08-13",kwh:113},{date:"2026-08-14",kwh:115},{date:"2026-08-15",kwh:120},{date:"2026-08-16",kwh:119},{date:"2026-08-17",kwh:112},{date:"2026-08-18",kwh:115},{date:"2026-08-19",kwh:120}];
+    saveLog(seed); return seed;
   });
-  const [intraday, setIntraday] = useState(() => loadIntraday());
-  const [view, setView] = useState("today");
-  const [uploading, setUploading] = useState(false);
-  const [flash, setFlash] = useState(null);
-  const [manualKwh, setManualKwh] = useState("");
-  const [lastImage, setLastImage] = useState(null);
-  const fileRef = useRef();
+  const [intra,setIntra]=useState(()=>loadIntra());
+  const [view,setView]=useState("today");
+  const [busy,setBusy]=useState(false);
+  const [flash,setFlash]=useState(null);
+  const [manual,setManual]=useState("");
+  const [thumb,setThumb]=useState(null);
+  const [loanBalance,setLoanBalance]=useState(()=>{try{return parseFloat(localStorage.getItem("solar_loan_balance"))||null;}catch{return null;}});
+  const [loanInput,setLoanInput]=useState("");
+  const [chartMode,setChartMode]=useState("kwh");
+  const fileRef=useRef();
 
-  const todayReadings = intraday[today] || [];
-  const latestReading = todayReadings.length > 0 ? [...todayReadings].sort((a,b) => b.hour - a.hour)[0] : null;
-  const projected = projectEndOfDay(todayReadings);
-  const displayKwh = log.find(e => e.date === today)?.kwh || latestReading?.kwh || null;
+  const todayR=intra[today]||[];
+  const lastR=todayR.length?[...todayR].sort((a,b)=>b.hour-a.hour)[0]:null;
+  const proj=project(todayR);
+  const dispKwh=log.find(e=>e.date===today)?.kwh??lastR?.kwh??null;
 
-  function addReading(hour, kwh, date) {
-    const d = date || today;
-    setIntraday(prev => {
-      const updated = { ...prev, [d]: [...(prev[d] || []).filter(r => Math.abs(r.hour - hour) > 0.2), { hour, kwh }] };
-      saveIntraday(updated); return updated;
-    });
-    setLog(prev => {
-      const updated = [...prev.filter(e => e.date !== d), { date: d, kwh }].sort((a,b) => a.date.localeCompare(b.date));
-      saveLog(updated); return updated;
-    });
+  function addReading(hour,kwh,date=today){
+    setIntra(prev=>{const upd={...prev,[date]:[...(prev[date]||[]).filter(r=>Math.abs(r.hour-hour)>0.2),{hour,kwh}]};saveIntra(upd);return upd;});
+    setLog(prev=>{const upd=[...prev.filter(e=>e.date!==date),{date,kwh}].sort((a,b)=>a.date.localeCompare(b.date));saveLog(upd);return upd;});
   }
 
-  async function analyzeImage(file) {
-    setUploading(true);
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64 = e.target.result.split(",")[1];
-      setLastImage(e.target.result);
-      try {
-        const resp = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "anthropic-version": "2023-06-01",
-            "anthropic-dangerous-direct-browser-access": "true"
-          },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-6", max_tokens: 500,
-            messages: [{ role: "user", content: [
-              { type: "image", source: { type: "base64", media_type: file.type || "image/jpeg", data: base64 } },
-              { type: "text", text: `Extract from SolarEdge screenshot. Look at the STATUS BAR clock at the TOP of the phone screen (e.g. "10:04", "14:30", "8:35"). Return ONLY JSON:
-{"kwh":<today kWh production or null>,"current_kw":<solar kW now or null>,"time_hour":<decimal hour from STATUS BAR CLOCK e.g. 10.07 for 10:04, 14.5 for 14:30 — NOT from any other time in the image>,"date":"<YYYY-MM-DD from screenshot date or null>"}` }
-            ]}]
-          })
-        });
-        const data = await resp.json();
-        const text = data.content?.[0]?.text?.replace(/```json|```/g, "").trim() || "{}";
-        const parsed = JSON.parse(text);
-        const hour = parsed.time_hour || nowHour();
-        const kwh = parsed.kwh;
-        const date = parsed.date || today;
-        if (kwh) {
-          addReading(hour, kwh, date);
-          const proj = projectEndOfDay([...(intraday[date] || []), { hour, kwh }]);
-          setFlash(`✓ ${fmt(kwh,1)} kWh · ${timeLabel(hour)}${proj ? ` · צפי: ~${fmt(proj,0)} kWh` : ""}`);
-        } else { setFlash("לא זיהיתי — נסה Day view"); }
-      } catch { setFlash("שגיאה בניתוח"); }
-      setTimeout(() => setFlash(null), 5000);
-      setUploading(false);
+  async function analyzeImage(file){
+    setBusy(true);
+    const reader=new FileReader();
+    reader.onload=async e=>{
+      const b64=e.target.result.split(",")[1];
+      setThumb(e.target.result);
+      try{
+        const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:300,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:file.type||"image/jpeg",data:b64}},{type:"text",text:`Extract solar production data from this SolarEdge screenshot (mobile app OR web portal). Return ONLY valid JSON: {"kwh":<today total kWh>,"time_hour":<decimal hour from status bar>,"date":"<YYYY-MM-DD>"}. Convert Wh to kWh. Mobile: read status bar clock. Web: read date from header.`}]}]})});
+        if(!res.ok){const err=await res.json().catch(()=>({}));setFlash(`שגיאת API ${res.status}: ${err?.error?.message||"בדוק חיבור"}`);setBusy(false);return;}
+        const data=await res.json();
+        if(data.error){setFlash(`שגיאה: ${data.error.message}`);setBusy(false);return;}
+        const txt=data.content?.[0]?.text?.replace(/```json|```/g,"").trim()||"{}";
+        let p={};
+        try{p=JSON.parse(txt);}catch{setFlash(`שגיאת פענוח: ${txt.slice(0,50)}`);setBusy(false);return;}
+        if(p.kwh){const h=p.time_hour||nowH();const d=p.date||today;addReading(h,p.kwh,d);const pr=project([...(intra[d]||[]),{hour:h,kwh:p.kwh}]);setFlash(`✓ ${fmt(p.kwh,1)} kWh · ${tlabel(h)}${pr?` · צפי: ~${fmt(pr,0)} kWh`:""}`);}
+        else{setFlash(`לא זיהיתי: ${txt.slice(0,60)}`);}
+      }catch(err){setFlash(`שגיאה: ${err.message||"בדוק חיבור"}`);}
+      setTimeout(()=>setFlash(null),5000);setBusy(false);
     };
     reader.readAsDataURL(file);
   }
 
-  function handleManual() {
-    const v = parseFloat(manualKwh);
-    if (!isNaN(v) && v > 0) {
-      addReading(nowHour(), v, today);
-      setManualKwh("");
-      const proj = projectEndOfDay([...(todayReadings), { hour: nowHour(), kwh: v }]);
-      setFlash(`✓ ${fmt(v,1)} kWh · ${timeLabel(nowHour())}${proj ? ` · צפי: ~${fmt(proj,0)} kWh` : ""}`);
-      setTimeout(() => setFlash(null), 5000);
-    }
-  }
+  function addManual(){const v=parseFloat(manual);if(!isNaN(v)&&v>0){addReading(nowH(),v,today);setManual("");const pr=project([...todayR,{hour:nowH(),kwh:v}]);setFlash(`✓ ${fmt(v,1)} kWh${pr?` · צפי: ~${fmt(pr,0)} kWh`:""}`);setTimeout(()=>setFlash(null),5000);}}
+  function updateLoanBalance(){const v=parseFloat(loanInput);if(!isNaN(v)&&v>=0){setLoanBalance(v);try{localStorage.setItem("solar_loan_balance",v);}catch{}setLoanInput("");}}
 
-  // Stats — past days only for avg
-  const pastDays = log.filter(e => e.date !== today);
-  const totalProduced = log.reduce((s, e) => s + (e.kwh || 0), 0);
-  const avgDaily = pastDays.length > 0 ? pastDays.reduce((s, e) => s + (e.kwh || 0), 0) / pastDays.length : 0;
-  const totalValue = log.reduce((s, e) => s + calcDayValue(e.kwh || 0), 0);
-  const loanRepaidPct = Math.min(100, (totalValue / LOAN_AMOUNT) * 100);
-  const monthlyIncome = calcDayValue(avgDaily) * 30;
-  const annualIncome = calcDayValue(avgDaily) * 365;
-  const yearsToRepay = annualIncome > 0 ? LOAN_AMOUNT / annualIncome : null;
-  const coveragePct = LOAN_MONTHLY > 0 ? Math.min(100, (monthlyIncome / LOAN_MONTHLY) * 100) : 0;
+  const pastDays=log.filter(e=>e.date!==today);
+  const totalKwh=log.reduce((s,e)=>s+(e.kwh||0),0);
+  const avgKwh=pastDays.length?pastDays.reduce((s,e)=>s+(e.kwh||0),0)/pastDays.length:0;
+  const totalVal=log.reduce((s,e)=>s+calcValue(e.kwh||0),0);
+  const loanPct=Math.min(100,(totalVal/LOAN_AMOUNT)*100);
+  const monthlyInc=calcValue(avgKwh)*30;
+  const annualInc=calcValue(avgKwh)*365;
+  const coverage=Math.min(100,(monthlyInc/LOAN_MONTHLY)*100);
+  const actualCoverage=Math.min(100,(MONTHLY_SOLAR_INCOME/LOAN_MONTHLY)*100);
+  const actualPayback=MONTHLY_SOLAR_INCOME>0?LOAN_AMOUNT/(MONTHLY_SOLAR_INCOME*12):null;
+  const projPayback=annualInc>0?LOAN_AMOUNT/annualInc:null;
+  const last7=log.slice(-7);
+  const wTotal=last7.reduce((s,e)=>s+(e.kwh||0),0);
+  const wValue=last7.reduce((s,e)=>s+calcValue(e.kwh||0),0);
+  const barData=last7.map(e=>({label:dlabel(e.date),kwh:e.kwh,val:Math.round(calcValue(e.kwh))}));
+  const readPts=[...todayR].sort((a,b)=>a.hour-b.hour).map(r=>({label:tlabel(r.hour),kwh:r.kwh}));
 
-  const last7 = log.slice(-7);
-  const weekTotal = last7.reduce((s, e) => s + (e.kwh || 0), 0);
-  const weekValue = last7.reduce((s, e) => s + calcDayValue(e.kwh || 0), 0);
-  const dailyChart = last7.map(e => ({ label: dateLabel(e.date), kwh: e.kwh, value: Math.round(calcDayValue(e.kwh)) }));
-  const readingPoints = [...todayReadings].sort((a,b) => a.hour - b.hour).map(r => ({ label: timeLabel(r.hour), kwh: r.kwh }));
+  const TAB=(v,l)=>(<button onClick={()=>setView(v)} style={{flex:1,padding:"9px 0",fontSize:13,fontWeight:600,cursor:"pointer",background:view===v?"#0A2A1E":"#111827",border:`1px solid ${view===v?"#10D98A":"#243048"}`,color:view===v?"#10D98A":"#6B7FA3",borderRadius:10}}>{l}</button>);
+  const CARD=({label,val,unit,sub,accent,color})=>(<div style={{flex:1,background:accent?"#0A2A1E":"#111827",borderRadius:12,padding:"13px 10px",border:`1px solid ${accent?"#10D98A":"#243048"}`}}><div style={{color:"#6B7FA3",fontSize:10,marginBottom:4}}>{label}</div><div style={{color:color||(accent?"#10D98A":"#fff"),fontSize:19,fontWeight:700,lineHeight:1}}>{val}</div><div style={{color:"#5A6E8C",fontSize:10,marginTop:3}}>{unit}{sub?` · ${sub}`:""}</div></div>);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#080808", color: "#fff", fontFamily: "'SF Pro Display', -apple-system, sans-serif", direction: "rtl", padding: "20px 16px", maxWidth: 480, margin: "0 auto" }}>
+    <div style={{minHeight:"100vh",background:"#0B1120",color:"#fff",fontFamily:"SF Pro Display,-apple-system,BlinkMacSystemFont,sans-serif",direction:"rtl",padding:"16px 14px 32px",maxWidth:430,margin:"0 auto"}}>
 
-      {/* Header */}
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 11, color: "#2ecc71", letterSpacing: 1.5, marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2ecc71", display: "inline-block", boxShadow: "0 0 6px #2ecc71" }} />
-          מונה חוזר · 0.635 ₪/kWh · {SYSTEM_KWP} kWp · 35 פאנלים
+      <div style={{marginBottom:18}}>
+        <div style={{fontSize:10,color:"#10D98A",letterSpacing:1.5,marginBottom:4,display:"flex",alignItems:"center",gap:6}}>
+          <span style={{width:6,height:6,borderRadius:"50%",background:"#10D98A",display:"inline-block",boxShadow:"0 0 8px #10D98A"}}/>
+          {SYSTEM_KWP} kWp · 35 פאנלים · טסקו אנרגיה
         </div>
-        <div style={{ fontSize: 24, fontWeight: 700 }}>מאור גורין ☀️</div>
-        <div style={{ color: "#444", fontSize: 11, marginTop: 2 }}>מאז {dateLabel(INSTALL_DATE)} · {log.length} ימי נתונים</div>
+        <div style={{fontSize:22,fontWeight:700,letterSpacing:-0.5}}>מאור גורין ☀️</div>
+        <div style={{color:"#4A5E7A",fontSize:11,marginTop:2}}>מאז {dlabel(INSTALL_DATE)} · {log.length} ימי נתונים · ממוצע {fmt(avgKwh,1)} kWh/יום</div>
       </div>
 
-      {/* Upload */}
-      <div onClick={() => fileRef.current.click()} style={{
-        background: uploading ? "#0d1f14" : "#0d0d0d",
-        border: `1.5px dashed ${uploading ? "#2ecc71" : "#222"}`,
-        borderRadius: 14, padding: "14px 18px", marginBottom: 10,
-        cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
-      }}>
-        <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }}
-          onChange={e => e.target.files[0] && analyzeImage(e.target.files[0])} />
-        <div style={{ fontSize: 22 }}>{uploading ? "⚡" : "📲"}</div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: uploading ? "#2ecc71" : "#fff" }}>
-            {uploading ? "מנתח..." : "העלה סקרינשוט"}
-          </div>
-          <div style={{ fontSize: 11, color: "#555" }}>כל העלאה נשמרת עם השעה</div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {lastImage && <img src={lastImage} alt="last" style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 8, border: "1px solid #2a2a2a" }} />}
-          {displayKwh && (
-            <div style={{ textAlign: "left" }}>
-              <div style={{ color: "#2ecc71", fontSize: 22, fontWeight: 700 }}>{fmt(displayKwh, 1)}</div>
-              <div style={{ color: "#555", fontSize: 10 }}>kWh היום</div>
+      <div style={{background:"linear-gradient(135deg,#0A2A1E,#0B1A2E)",borderRadius:16,padding:16,marginBottom:16,border:"1px solid #10D98A"}}>
+        <div style={{color:"#10D98A",fontSize:10,letterSpacing:1.5,marginBottom:12}}>סיכום מצטבר · {pastDays.length} ימים מלאים</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:12}}>
+          {[{label:"ממוצע יומי",val:`${fmt(avgKwh,1)} kWh`,sub:pastDays.length>0?`${fmt(calcValue(avgKwh),1)} ₪/יום`:"—"},{label:"סה״כ ייצור",val:`${fmt(totalKwh,0)} kWh`,sub:`${fmt(totalVal,0)} ₪`},{label:"הכנסה חודשית",val:`${fmt(MONTHLY_SOLAR_INCOME,0)} ₪`,sub:"בפועל"}].map((k,i)=>(
+            <div key={i} style={{background:"#0D1A2E",borderRadius:10,padding:"10px 8px",border:"1px solid #1a3a1a"}}>
+              <div style={{color:"#6B7FA3",fontSize:9,marginBottom:4}}>{k.label}</div>
+              <div style={{color:"#10D98A",fontSize:14,fontWeight:700,lineHeight:1}}>{k.val}</div>
+              <div style={{color:"#4A5E7A",fontSize:9,marginTop:3}}>{k.sub}</div>
             </div>
-          )}
+          ))}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          {[{label:"שנתי צפוי",val:`${fmt(annualInc,0)} ₪`,color:"#10D98A"},{label:"החזר הלוואה",val:projPayback?`${projPayback.toFixed(1)} שנים`:"—",color:projPayback&&projPayback<=4.5?"#10D98A":"#F59E0B"}].map((k,i)=>(
+            <div key={i} style={{background:"#0D1A2E",borderRadius:10,padding:"10px 8px",border:"1px solid #1a3a1a",textAlign:"center"}}>
+              <div style={{color:"#6B7FA3",fontSize:9,marginBottom:4}}>{k.label}</div>
+              <div style={{color:k.color||"#fff",fontSize:16,fontWeight:700}}>{k.val}</div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Manual */}
-      <div style={{ display: "flex", gap: 8, marginBottom: flash ? 8 : 16 }}>
-        <input value={manualKwh} onChange={e => setManualKwh(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && handleManual()}
-          placeholder="kWh ידנית עכשיו"
-          style={{ flex: 1, background: "#111", border: "1px solid #1e1e1e", borderRadius: 10, color: "#fff", padding: "9px 14px", fontSize: 13, outline: "none" }} />
-        <button onClick={handleManual} style={{ background: "#0d2a1a", border: "1px solid #2ecc71", color: "#2ecc71", borderRadius: 10, padding: "9px 16px", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>+ הוסף</button>
+      <div onClick={()=>fileRef.current.click()} style={{background:busy?"#0A2018":"#111827",border:`1.5px dashed ${busy?"#10D98A":"#243048"}`,borderRadius:14,padding:"13px 16px",marginBottom:10,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
+        <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>e.target.files[0]&&analyzeImage(e.target.files[0])}/>
+        <div style={{fontSize:20}}>{busy?"⚡":"📲"}</div>
+        <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:busy?"#10D98A":"#E8EFF8"}}>{busy?"מנתח...":"העלה סקרינשוט"}</div><div style={{fontSize:10,color:"#5A6E8C"}}>mySolarEdge → Day view</div></div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          {thumb&&<img src={thumb} alt="" style={{width:44,height:44,objectFit:"cover",borderRadius:8,border:"1px solid #2A3A58"}}/>}
+          {dispKwh&&<div style={{textAlign:"left"}}><div style={{color:dayColor(dispKwh),fontSize:20,fontWeight:700}}>{fmt(dispKwh,1)}</div><div style={{color:"#6B7FA3",fontSize:10}}>kWh</div></div>}
+        </div>
       </div>
 
-      {flash && <div style={{ background: "#0d2a1a", border: "1px solid #2ecc71", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 13, color: "#2ecc71", lineHeight: 1.6 }}>{flash}</div>}
+      <div style={{display:"flex",gap:8,marginBottom:flash?8:16}}>
+        <input value={manual} onChange={e=>setManual(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addManual()} placeholder="הכנס kWh ידנית" style={{flex:1,background:"#111827",border:"1px solid #243048",borderRadius:10,color:"#fff",padding:"9px 13px",fontSize:13,outline:"none"}}/>
+        <button onClick={addManual} style={{background:"#0A2A1E",border:"1px solid #10D98A",color:"#10D98A",borderRadius:10,padding:"9px 14px",cursor:"pointer",fontSize:13,fontWeight:600}}>+</button>
+      </div>
 
-      {/* Today summary */}
-      {todayReadings.length > 0 && (
-        <div style={{ background: "#0f0f0f", borderRadius: 14, padding: 16, marginBottom: 16, border: "1px solid #181818" }}>
-          <div style={{ color: "#555", fontSize: 11, marginBottom: 12 }}>היום · {todayReadings.length} קריאות</div>
-          <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-            {[
-              { label: "עכשיו", value: fmt(latestReading?.kwh, 1), unit: "kWh", sub: latestReading ? timeLabel(latestReading.hour) : "" },
-              { label: "צפי לסיום", value: projected ? fmt(projected, 0) : "—", unit: "kWh", sub: "~19:30", accent: true },
-              { label: "שווי צפוי", value: projected ? fmt(projected * TARIFF, 1) : "—", unit: "₪", sub: "להיום" },
-            ].map((k, i) => (
-              <div key={i} style={{ flex: 1, background: k.accent ? "#0d2a1a" : "#141414", borderRadius: 10, padding: "12px 10px", border: `1px solid ${k.accent ? "#2ecc71" : "#1e1e1e"}` }}>
-                <div style={{ color: "#555", fontSize: 10, marginBottom: 4 }}>{k.label}</div>
-                <div style={{ color: k.accent ? "#2ecc71" : "#fff", fontSize: 18, fontWeight: 700 }}>{k.value}</div>
-                <div style={{ color: "#444", fontSize: 10, marginTop: 2 }}>{k.unit} · {k.sub}</div>
-              </div>
-            ))}
+      {flash&&<div style={{background:"#0A2A1E",border:"1px solid #10D98A",borderRadius:10,padding:"10px 13px",marginBottom:14,fontSize:12,color:"#10D98A",lineHeight:1.5}}>{flash}</div>}
+
+      {todayR.length>0&&(
+        <div style={{background:"#111827",borderRadius:14,padding:14,marginBottom:14,border:"1px solid #243048"}}>
+          <div style={{color:"#5A6E8C",fontSize:10,marginBottom:10}}>היום · {todayR.length} קריאות</div>
+          <div style={{display:"flex",gap:8,marginBottom:12}}>
+            <CARD label="עכשיו" val={fmt(lastR?.kwh,1)} unit="kWh" sub={lastR?tlabel(lastR.hour):""}/>
+            <CARD label="צפי סיום" val={proj?fmt(proj,0):"—"} unit="kWh" accent/>
+            <CARD label="שווי יום" val={proj?fmt(calcValue(proj),1):"—"} unit="₪"/>
           </div>
-
-          {/* Timeline */}
-          <div style={{ color: "#444", fontSize: 10, marginBottom: 8 }}>ציר זמן קריאות</div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: projected ? 14 : 0 }}>
-            {[...todayReadings].sort((a,b) => a.hour - b.hour).map((r, i) => (
-              <div key={i} style={{ background: "#181818", borderRadius: 8, padding: "6px 10px", border: "1px solid #252525" }}>
-                <div style={{ color: "#888", fontSize: 10 }}>{timeLabel(r.hour)}</div>
-                <div style={{ color: "#2ecc71", fontSize: 13, fontWeight: 600 }}>{fmt(r.kwh, 1)} kWh</div>
-              </div>
-            ))}
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:proj?12:0}}>
+            {[...todayR].sort((a,b)=>a.hour-b.hour).map((r,i)=>(<div key={i} style={{background:"#1C2437",borderRadius:8,padding:"5px 9px",border:"1px solid #2A3A58"}}><div style={{color:"#6B7FA3",fontSize:9}}>{tlabel(r.hour)}</div><div style={{color:dayColor(r.kwh),fontSize:12,fontWeight:700}}>{fmt(r.kwh,1)}</div></div>))}
           </div>
-
-          {projected && (
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <span style={{ color: "#555", fontSize: 10 }}>התקדמות יום</span>
-                <span style={{ color: "#2ecc71", fontSize: 10 }}>{fmt((latestReading?.kwh / projected) * 100, 0)}%</span>
-              </div>
-              <div style={{ background: "#181818", borderRadius: 6, height: 6 }}>
-                <div style={{ width: `${Math.min(100, (latestReading?.kwh / projected) * 100)}%`, background: "linear-gradient(90deg, #1a5c38, #2ecc71)", height: "100%", borderRadius: 6 }} />
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 3 }}>
-                <span style={{ color: "#444", fontSize: 10 }}>{fmt(latestReading?.kwh, 1)} kWh</span>
-                <span style={{ color: "#444", fontSize: 10 }}>צפי: {fmt(projected, 0)} kWh</span>
-              </div>
-            </div>
-          )}
+          {proj&&(<div><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{color:"#5A6E8C",fontSize:10}}>התקדמות יום</span><span style={{color:"#10D98A",fontSize:10,fontWeight:600}}>{fmt((lastR?.kwh/proj)*100,0)}%</span></div><div style={{background:"#1C2437",borderRadius:5,height:5}}><div style={{width:`${Math.min(100,(lastR?.kwh/proj)*100)}%`,background:`linear-gradient(90deg,#0A3D2A,${dayColor(proj)})`,height:"100%",borderRadius:5}}/></div><div style={{display:"flex",justifyContent:"space-between",marginTop:3}}><span style={{color:"#4A5E7A",fontSize:9}}>{fmt(lastR?.kwh,1)} kWh</span><span style={{color:"#4A5E7A",fontSize:9}}>צפי: {fmt(proj,0)} kWh</span></div></div>)}
         </div>
       )}
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
-        {[["today","היום"],["week","שבוע"],["roi","ROI"]].map(([v, l]) => (
-          <button key={v} onClick={() => setView(v)} style={{
-            background: view === v ? "#0d2a1a" : "#0f0f0f",
-            border: `1px solid ${view === v ? "#2ecc71" : "#1e1e1e"}`,
-            color: view === v ? "#2ecc71" : "#666",
-            borderRadius: 8, padding: "7px 14px", cursor: "pointer", fontSize: 12, fontWeight: 600,
-          }}>{l}</button>
-        ))}
-      </div>
+      <div style={{display:"flex",gap:6,marginBottom:14}}>{TAB("today","היום")}{TAB("week","שבוע")}{TAB("roi","ROI")}</div>
 
-      {/* Today chart */}
-      {view === "today" && readingPoints.length > 1 && (
-        <div style={{ background: "#0f0f0f", borderRadius: 14, padding: "18px 12px 12px", border: "1px solid #181818", marginBottom: 16 }}>
-          <div style={{ color: "#666", fontSize: 11, marginBottom: 14, paddingRight: 4 }}>קריאות היום · kWh מצטבר</div>
-          <ResponsiveContainer width="100%" height={160}>
-            <AreaChart data={readingPoints}>
-              <defs>
-                <linearGradient id="todayGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2ecc71" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#2ecc71" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="label" tick={{ fill: "#555", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: "#444", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#2ecc71", strokeWidth: 1 }} />
-              {projected && <ReferenceLine y={projected} stroke="#f39c12" strokeDasharray="3 3" strokeWidth={1}
-                label={{ value: `צפי ${fmt(projected,0)}`, fill: "#f39c12", fontSize: 9, position: "right" }} />}
-              <Area type="monotone" dataKey="kwh" name="ייצור" stroke="#2ecc71" strokeWidth={2} fill="url(#todayGrad)" dot={{ fill: "#2ecc71", r: 5, strokeWidth: 0 }} />
+      {view==="today"&&readPts.length>1&&(
+        <div style={{background:"#111827",borderRadius:14,padding:"16px 10px 10px",border:"1px solid #243048",marginBottom:14}}>
+          <div style={{color:"#6B7FA3",fontSize:10,marginBottom:12,paddingRight:4}}>קריאות היום · kWh מצטבר</div>
+          <ResponsiveContainer width="100%" height={150}>
+            <AreaChart data={readPts}>
+              <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10D98A" stopOpacity={0.25}/><stop offset="95%" stopColor="#10D98A" stopOpacity={0}/></linearGradient></defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1E2D45" vertical={false}/>
+              <XAxis dataKey="label" tick={{fill:"#6B7FA3",fontSize:9}} axisLine={false} tickLine={false}/>
+              <YAxis tick={{fill:"#4A5E7A",fontSize:9}} axisLine={false} tickLine={false}/>
+              <Tooltip content={<Tip/>} cursor={{stroke:"#10D98A",strokeWidth:1}}/>
+              {proj&&<ReferenceLine y={proj} stroke="#F59E0B" strokeDasharray="3 3" strokeWidth={1} label={{value:`צפי ${fmt(proj,0)}`,fill:"#F59E0B",fontSize:9,position:"right"}}/>}
+              <Area type="monotone" dataKey="kwh" name="ייצור" stroke="#10D98A" strokeWidth={2} fill="url(#g1)" dot={{fill:"#10D98A",r:4,strokeWidth:0}}/>
             </AreaChart>
           </ResponsiveContainer>
         </div>
       )}
 
-      {/* Weekly chart */}
-      {view === "week" && dailyChart.length > 0 && (
-        <div style={{ background: "#0f0f0f", borderRadius: 14, padding: "18px 12px 12px", border: "1px solid #181818", marginBottom: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14, paddingRight: 4 }}>
-            <span style={{ color: "#666", fontSize: 11 }}>7 ימים אחרונים</span>
-            <span style={{ color: "#2ecc71", fontSize: 11, fontWeight: 600 }}>{fmt(weekTotal, 0)} kWh · {fmt(weekValue, 0)} ₪ · ממוצע {fmt(weekValue/Math.min(last7.length,7), 0)} ₪/יום</span>
+      {view==="week"&&barData.length>0&&(
+        <>
+        <div style={{background:"#111827",borderRadius:14,padding:"16px 10px 10px",border:"1px solid #243048",marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:12,paddingRight:4}}>
+            <span style={{color:"#6B7FA3",fontSize:10}}>7 ימים אחרונים</span>
+            <span style={{color:"#10D98A",fontSize:10,fontWeight:600}}>{fmt(wTotal,0)} kWh · {fmt(wValue,0)} ₪</span>
           </div>
-          <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={dailyChart} barSize={28}>
-              <XAxis dataKey="label" tick={{ fill: "#555", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: "#444", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff05" }} />
-              <ReferenceLine y={85} stroke="#f39c12" strokeDasharray="4 4" strokeWidth={1} label={{ value: "יעד", fill: "#f39c12", fontSize: 9, position: "right" }} />
-              <Bar dataKey="kwh" name="kWh" radius={[5,5,0,0]}>
-                {dailyChart.map((e, i) => <Cell key={i} fill={e.kwh >= 90 ? "#2ecc71" : e.kwh >= 70 ? "#27ae60" : "#1a5c38"} />)}
+          <div style={{display:"flex",gap:6,marginBottom:10,paddingRight:4}}>
+            {[["kwh","⚡ kWh"],["val","💰 ₪"]].map(([k,l])=>(<button key={k} onClick={()=>setChartMode(k)} style={{padding:"5px 12px",fontSize:11,fontWeight:600,cursor:"pointer",borderRadius:8,background:chartMode===k?"#0A2A1E":"#1C2437",border:`1px solid ${chartMode===k?"#10D98A":"#2A3A58"}`,color:chartMode===k?"#10D98A":"#6B7FA3"}}>{l}</button>))}
+          </div>
+          <ResponsiveContainer width="100%" height={170}>
+            <BarChart data={barData} barSize={26}>
+              <XAxis dataKey="label" tick={{fill:"#5A6E8C",fontSize:10}} axisLine={false} tickLine={false}/>
+              <YAxis tick={{fill:"#4A5E7A",fontSize:9}} axisLine={false} tickLine={false} domain={chartMode==="kwh"?[0,130]:[0,Math.max(...barData.map(d=>d.val))*1.3]} tickFormatter={v=>chartMode==="kwh"?v:`${v}₪`}/>
+              <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=barData.find(b=>b.label===label);return<div style={{background:"#1C2437",border:"1px solid #2A3A58",borderRadius:10,padding:"8px 12px",fontSize:11,direction:"rtl"}}><div style={{color:"#6B7FA3",marginBottom:4}}>{label}</div><div style={{color:dayColor(d?.kwh||0),fontWeight:700}}>{dayEmoji(d?.kwh||0)} {fmt(d?.kwh,1)} kWh</div><div style={{color:"#F59E0B",fontWeight:600}}>{fmt(d?.val,0)} ₪</div></div>;}} cursor={{fill:"#ffffff04"}}/>
+              {chartMode==="kwh"&&<ReferenceLine y={100} stroke="#00FFB3" strokeDasharray="3 3" strokeWidth={1} label={{value:"😎 100",fill:"#00FFB3",fontSize:9,position:"right"}}/>}
+              {chartMode==="kwh"&&<ReferenceLine y={85} stroke="#F59E0B" strokeDasharray="3 3" strokeWidth={1} label={{value:"יעד",fill:"#F59E0B",fontSize:9,position:"right"}}/>}
+              <Bar dataKey={chartMode} name={chartMode==="kwh"?"kWh":"₪"} radius={[5,5,0,0]} label={{position:"insideTop",formatter:(v,i)=>chartMode==="kwh"?`${fmt(v,0)}`:`${fmt(v,0)}₪`,fontSize:10,fill:"#000",fontWeight:900,dy:8}}>
+                {barData.map((e,i)=><Cell key={i} fill={chartMode==="kwh"?dayColor(e.kwh):"#F59E0B"}/>)}
               </Bar>
-
             </BarChart>
           </ResponsiveContainer>
+          <div style={{display:"flex",gap:8,paddingRight:4,marginTop:8,flexWrap:"wrap"}}>
+            {[["#00FFB3","😎 100+"],["#10D98A","✅ 85-100"],["#F59E0B","🟡 70-85"],["#EF4444","🔴 <70"]].map(([c,l])=>(<div key={l} style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:7,height:7,background:c,borderRadius:2}}/><span style={{color:"#5A6E8C",fontSize:9}}>{l}</span></div>))}
+          </div>
         </div>
-      )}
-
-      {/* Summary panel */}
-      {view === "week" && (
-        <div style={{ background: "#0f0f0f", borderRadius: 14, padding: 16, border: "1px solid #181818", marginBottom: 16 }}>
-          <div style={{ color: "#555", fontSize: 11, marginBottom: 12 }}>סיכום כספי · מונה חוזר</div>
-          {[
-            { label: "שבועי", kwh: weekTotal, value: weekValue },
-            { label: "חודשי (צפי)", kwh: calcDayValue(avgDaily) > 0 ? avgDaily * 30 : 0, value: monthlyIncome },
-            { label: "שנתי (צפי)", kwh: avgDaily * 365, value: annualIncome },
-          ].map((r, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: i < 2 ? 10 : 0, marginBottom: i < 2 ? 10 : 0, borderBottom: i < 2 ? "1px solid #161616" : "none" }}>
-              <div>
-                <div style={{ color: "#aaa", fontSize: 13 }}>{r.label}</div>
-                <div style={{ color: "#555", fontSize: 11 }}>{fmt(r.kwh, 0)} kWh</div>
-              </div>
-              <div style={{ textAlign: "left" }}>
-                <span style={{ color: "#2ecc71", fontSize: 22, fontWeight: 700 }}>{fmt(r.value, 0)}</span>
-                <span style={{ color: "#555", fontSize: 12, marginRight: 4 }}>₪</span>
-              </div>
+        <div style={{background:"#111827",borderRadius:14,padding:14,border:"1px solid #243048",marginBottom:14}}>
+          <div style={{color:"#5A6E8C",fontSize:10,marginBottom:12}}>סיכום כספי · לפי הסכם טסקו</div>
+          <div style={{color:"#4A5E7A",fontSize:9,marginBottom:12}}>צריכה עצמית: {TARIFF_BUY} ₪/kWh · עודף: {TARIFF_SELL} ₪/kWh · צריכה: {DAILY_CONS} kWh/יום</div>
+          {[{label:"שבועי",kwh:fmt(wTotal,0),val:fmt(wValue,0)},{label:"חודשי (צפי)",kwh:fmt(avgKwh*30,0),val:fmt(monthlyInc,0)},{label:"שנתי (צפי)",kwh:fmt(avgKwh*365,0),val:fmt(annualInc,0)}].map((r,i)=>(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingBottom:i<2?10:0,marginBottom:i<2?10:0,borderBottom:i<2?"1px solid #1C2437":"none"}}>
+              <div><div style={{color:"#B0C0D8",fontSize:13}}>{r.label}</div><div style={{color:"#5A6E8C",fontSize:10}}>{r.kwh} kWh</div></div>
+              <div><span style={{color:"#10D98A",fontSize:20,fontWeight:700}}>{r.val}</span><span style={{color:"#5A6E8C",fontSize:11,marginRight:3}}>₪</span></div>
             </div>
           ))}
         </div>
+        </>
       )}
 
-      {/* ROI */}
-      {view === "roi" && (
-        <div style={{ background: "#0f0f0f", borderRadius: 14, padding: 18, border: "1px solid #181818", marginBottom: 16 }}>
-          <div style={{ color: "#555", fontSize: 11, marginBottom: 14 }}>תחזית · ממוצע {fmt(avgDaily,1)} kWh/יום</div>
+      {view==="roi"&&(
+        <>
+        <div style={{background:"#111827",borderRadius:14,padding:"16px 10px 10px",border:"1px solid #243048",marginBottom:10}}>
+          <div style={{color:"#6B7FA3",fontSize:10,marginBottom:2,paddingRight:4}}>הלוואה מול הכנסת סולרי · 5 שנים</div>
+          <div style={{color:"#4A5E7A",fontSize:9,marginBottom:12,paddingRight:4}}>נקודת האיזון — כשהסולרי מכסה את ההלוואה</div>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={Array.from({length:61},(_,m)=>({label:m===0?"0":m===6?"6":m===12?"12":m===18?"18":m===24?"24":m===30?"30":m===36?"36":m===42?"42":m===48?"48":m===54?"54":m===60?"60":"",month:m,loan:Math.max(0,Math.round(LOAN_MONTHLY*60-m*LOAN_MONTHLY)),solar:Math.round(MONTHLY_SOLAR_INCOME*m),projected:Math.round(monthlyInc*m)}))}>
+              <defs>
+                <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10D98A" stopOpacity={0.2}/><stop offset="95%" stopColor="#10D98A" stopOpacity={0}/></linearGradient>
+                <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#EF4444" stopOpacity={0.2}/><stop offset="95%" stopColor="#EF4444" stopOpacity={0}/></linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1E2D45" vertical={false}/>
+              <XAxis dataKey="label" tick={{fill:"#B0C0D8",fontSize:10,fontWeight:600}} axisLine={{stroke:"#2A3A58"}} tickLine={false} interval={0} label={{value:"חודשים",position:"insideBottom",fill:"#5A6E8C",fontSize:9,dy:8}}/>
+              <YAxis tick={{fill:"#4A5E7A",fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>`${Math.round(v/1000)}K`}/>
+              <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;return<div style={{background:"#1C2437",border:"1px solid #2A3A58",borderRadius:10,padding:"8px 12px",fontSize:11,direction:"rtl"}}><div style={{color:"#6B7FA3",marginBottom:4}}>חודש {payload[0]?.payload?.month}</div>{payload.map((p,i)=><div key={i} style={{color:p.color,fontWeight:600}}>{p.name}: {fmt(p.value,0)} ₪</div>)}</div>;}} cursor={{stroke:"#4A5E7A",strokeWidth:1}}/>
+              <Area type="monotone" dataKey="solar" name="בפועל" stroke="#10D98A" strokeWidth={2} fill="url(#sg)" dot={false}/>
+              <Area type="monotone" dataKey="projected" name="צפי" stroke="#60A5FA" strokeWidth={1.5} fill="none" strokeDasharray="4 4" dot={false}/>
+              <Area type="monotone" dataKey="loan" name="יתרת הלוואה" stroke="#EF4444" strokeWidth={2} fill="url(#lg)" dot={false}/>
+            </AreaChart>
+          </ResponsiveContainer>
+          <div style={{display:"flex",gap:14,paddingRight:4,marginTop:8}}>
+            <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:14,height:2,background:"#10D98A"}}/><span style={{color:"#5A6E8C",fontSize:9}}>בפועל</span></div>
+            <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:14,height:2,background:"#60A5FA"}}/><span style={{color:"#5A6E8C",fontSize:9}}>צפי</span></div>
+            <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:14,height:2,background:"#EF4444"}}/><span style={{color:"#5A6E8C",fontSize:9}}>יתרת הלוואה</span></div>
+          </div>
+        </div>
+        <div style={{background:"#111827",borderRadius:14,padding:14,border:"1px solid #243048",marginBottom:14}}>
+          <div style={{color:"#5A6E8C",fontSize:10,marginBottom:14}}>תחזית · ממוצע {fmt(avgKwh,1)} kWh/יום ({pastDays.length} ימים)</div>
           {[
-            { label: "הכנסה חודשית", value: fmt(monthlyIncome, 0), unit: "₪/חודש" },
-            { label: "החזר הלוואה", value: fmt(LOAN_MONTHLY, 0), unit: "₪/חודש", sub: "5 שנים · פריים-0.1%" },
-            { label: "כיסוי הלוואה", value: fmt(coveragePct, 1), unit: "%", highlight: true, color: coveragePct >= 100 ? "#2ecc71" : "#f39c12" },
-            { label: "עודף/גרעון חודשי", value: fmt(monthlyIncome - LOAN_MONTHLY, 0), unit: "₪/חודש", color: monthlyIncome >= LOAN_MONTHLY ? "#2ecc71" : "#e74c3c" },
-            { label: "הכנסה שנתית", value: fmt(annualIncome, 0), unit: "₪/שנה" },
-            { label: "סה״כ 25 שנה", value: fmt(annualIncome * 25, 0), unit: "₪", highlight: true },
-            { label: "החזר הלוואה", value: yearsToRepay ? yearsToRepay.toFixed(1) : "—", unit: "שנים" },
-          ].map((r, i) => (
-            <div key={i} style={{
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-              padding: r.highlight ? "10px 12px" : "0 0 10px",
-              marginBottom: 10,
-              background: r.highlight ? "#0d2a1a" : "transparent",
-              borderBottom: !r.highlight ? "1px solid #111" : "none",
-              borderRadius: r.highlight ? 10 : 0,
-            }}>
-              <div>
-                <div style={{ color: r.highlight ? (r.color || "#2ecc71") : "#aaa", fontSize: 13, fontWeight: r.highlight ? 600 : 400 }}>{r.label}</div>
-                {r.sub && <div style={{ color: "#555", fontSize: 10, marginTop: 2 }}>{r.sub}</div>}
-              </div>
-              <div>
-                <span style={{ color: r.color || (r.highlight ? "#2ecc71" : "#fff"), fontSize: r.highlight ? 22 : 18, fontWeight: 700 }}>{r.value}</span>
-                <span style={{ color: "#555", fontSize: 11, marginRight: 4 }}>{r.unit}</span>
-              </div>
+            {label:"חשבון חשמל חודשי",val:fmt(MONTHLY_BILL,0),unit:"₪/חודש",sub:`~${DAILY_CONS} kWh/יום`},
+            {label:"הכנסה בפועל",val:fmt(MONTHLY_SOLAR_INCOME,0),unit:"₪/חודש",sub:`${fmt(MONTHLY_SOLAR_INCOME/30,1)} ₪/יום`,color:"#10D98A"},
+            {label:"הכנסה חודשית (צפי)",val:fmt(monthlyInc,0),unit:"₪/חודש",color:monthlyInc>=LOAN_MONTHLY?"#10D98A":"#F59E0B"},
+            {label:"החזר הלוואה",val:fmt(LOAN_MONTHLY,0),unit:"₪/חודש",sub:"5 שנים · פריים-0.1%"},
+            {label:"כיסוי הלוואה (בפועל)",val:fmt(actualCoverage,1),unit:"%",highlight:true,color:actualCoverage>=100?"#10D98A":"#F59E0B"},
+            {label:"עודף/גרעון",val:(monthlyInc>=LOAN_MONTHLY?"+":"")+fmt(monthlyInc-LOAN_MONTHLY,0),unit:"₪/חודש",color:monthlyInc>=LOAN_MONTHLY?"#10D98A":"#EF4444"},
+            {label:"הכנסה שנתית (צפי)",val:fmt(annualInc,0),unit:"₪/שנה",color:annualInc>=TESCO_ANNUAL?"#10D98A":"#F59E0B"},
+            {label:"תחזית טסקו",val:fmt(TESCO_ANNUAL,0),unit:"₪/שנה",sub:"בסיס חוזה"},
+            {label:"פער מתחזית",val:(annualInc>=TESCO_ANNUAL?"+":"")+fmt(annualInc-TESCO_ANNUAL,0),unit:"₪/שנה",color:annualInc>=TESCO_ANNUAL?"#10D98A":"#EF4444"},
+            {label:"סה״כ 25 שנה",val:fmt(annualInc*25,0),unit:"₪",highlight:true},
+            {label:"החזר השקעה (בפועל)",val:actualPayback?actualPayback.toFixed(1):"—",unit:"שנים",sub:"לפי 1,652 ₪/חודש",color:"#10D98A"},
+            {label:"החזר השקעה (צפי)",val:projPayback?projPayback.toFixed(1):"—",unit:"שנים",sub:`טסקו: ${TESCO_PAYBACK} שנים`},
+          ].map((r,i)=>(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:r.highlight?"10px 10px":"0 0 9px",marginBottom:9,background:r.highlight?"#0A2A1E":"transparent",borderBottom:!r.highlight?"1px solid #1C2437":"none",borderRadius:r.highlight?10:0}}>
+              <div><div style={{color:r.highlight?(r.color||"#10D98A"):"#8A9BBF",fontSize:12,fontWeight:r.highlight?600:400}}>{r.label}</div>{r.sub&&<div style={{color:"#5A6E8C",fontSize:9,marginTop:1}}>{r.sub}</div>}</div>
+              <div><span style={{color:r.color||(r.highlight?"#10D98A":"#fff"),fontSize:r.highlight?20:17,fontWeight:700}}>{r.val}</span><span style={{color:"#5A6E8C",fontSize:10,marginRight:3}}>{r.unit}</span></div>
             </div>
           ))}
         </div>
+        </>
       )}
 
-      {/* Loan progress */}
-      <div style={{ background: "#0f0f0f", borderRadius: 14, padding: 16, border: "1px solid #181818" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-          <span style={{ color: "#888", fontSize: 12 }}>החזר הלוואה (80,000 ₪)</span>
-          <span style={{ color: "#f39c12", fontSize: 12, fontWeight: 600 }}>{fmt(loanRepaidPct, 3)}%</span>
+      <div style={{background:"#111827",borderRadius:14,padding:14,border:"1px solid #243048",marginBottom:10}}>
+        <div style={{color:"#8A9BBF",fontSize:11,marginBottom:10}}>יתרת הלוואה בפועל — מהבנק</div>
+        <div style={{display:"flex",gap:8,marginBottom:loanBalance?10:0}}>
+          <input value={loanInput} onChange={e=>setLoanInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&updateLoanBalance()} placeholder="הכנס יתרה מהבנק ₪" style={{flex:1,background:"#1C2437",border:"1px solid #2A3A58",borderRadius:10,color:"#fff",padding:"9px 13px",fontSize:13,outline:"none",direction:"rtl"}}/>
+          <button onClick={updateLoanBalance} style={{background:"#1C2A1C",border:"1px solid #F59E0B",color:"#F59E0B",borderRadius:10,padding:"9px 14px",cursor:"pointer",fontSize:13,fontWeight:600}}>עדכן</button>
         </div>
-        <div style={{ background: "#181818", borderRadius: 6, height: 8, overflow: "hidden", marginBottom: 6 }}>
-          <div style={{ width: `${loanRepaidPct}%`, background: "linear-gradient(90deg, #1a5c38, #2ecc71)", height: "100%", borderRadius: 6 }} />
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span style={{ color: "#555", fontSize: 11 }}>נצבר: {fmt(totalValue, 0)} ₪</span>
-          <span style={{ color: "#555", fontSize: 11 }}>נותר: {fmt(Math.max(0, LOAN_AMOUNT - totalValue), 0)} ₪</span>
-        </div>
+        {loanBalance!==null&&(<div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{color:"#8A9BBF",fontSize:12}}>נשאר לשלם</span><span style={{color:"#F59E0B",fontSize:18,fontWeight:700}}>{fmt(loanBalance,0)} ₪</span></div>
+          <div style={{background:"#1C2437",borderRadius:5,height:7,overflow:"hidden",marginBottom:6}}><div style={{width:`${Math.min(100,((LOAN_AMOUNT-loanBalance)/LOAN_AMOUNT)*100)}%`,background:"linear-gradient(90deg,#0A3D2A,#10D98A)",height:"100%",borderRadius:5}}/></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#4A5E7A",fontSize:10}}>שולם: {fmt(LOAN_AMOUNT-loanBalance,0)} ₪</span><span style={{color:"#4A5E7A",fontSize:10}}>{fmt(((LOAN_AMOUNT-loanBalance)/LOAN_AMOUNT)*100,1)}% מההלוואה</span></div>
+          {loanBalance>0&&MONTHLY_SOLAR_INCOME>0&&(<div style={{marginTop:8,padding:"8px 10px",background:"#0A2A1E",borderRadius:8,border:"1px solid #1a3a1a"}}><span style={{color:"#10D98A",fontSize:11}}>⚡ בקצב הנוכחי — עוד ~{fmt(loanBalance/MONTHLY_SOLAR_INCOME,1)} חודשים לסיום ההלוואה</span></div>)}
+        </div>)}
       </div>
 
-      <div style={{ textAlign: "center", color: "#222", fontSize: 10, marginTop: 16 }}>
-        מונה חוזר · 0.635 ₪/kWh · SolarEdge {SYSTEM_KWP} kWp · 35 פאנלים
+      <div style={{background:"#111827",borderRadius:14,padding:14,border:"1px solid #243048"}}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:7}}><span style={{color:"#8A9BBF",fontSize:12}}>החזר הלוואה · 79,800 ₪</span><span style={{color:"#F59E0B",fontSize:12,fontWeight:600}}>{fmt(loanPct,3)}%</span></div>
+        <div style={{background:"#1C2437",borderRadius:5,height:7,overflow:"hidden",marginBottom:6}}><div style={{width:`${loanPct}%`,background:"linear-gradient(90deg,#0A3D2A,#10D98A)",height:"100%",borderRadius:5}}/></div>
+        <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#4A5E7A",fontSize:10}}>נצבר: {fmt(totalVal,0)} ₪</span><span style={{color:"#4A5E7A",fontSize:10}}>נותר: {fmt(Math.max(0,LOAN_AMOUNT-totalVal),0)} ₪</span></div>
       </div>
+
+      <div style={{textAlign:"center",color:"#1C2437",fontSize:9,marginTop:14}}>טסקו אנרגיה · קנייה {TARIFF_BUY} ₪ · מכירה {TARIFF_SELL} ₪ · {SYSTEM_KWP} kWp</div>
     </div>
   );
 }
