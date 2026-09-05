@@ -13,8 +13,8 @@ const INSTALL_DATE  = "2026-08-13";
 const TESCO_ANNUAL  = 17741;
 const TESCO_PAYBACK = 4.5;
 const SUNRISE = 6, SUNSET = 19.5;
-const STORAGE_KEY  = "solar_v9_log";
-const INTRADAY_KEY = "solar_v9_intra";
+const STORAGE_KEY  = "solar_v10_log";
+const INTRADAY_KEY = "solar_v10_intra";
 
 function calcValue(kwh) {
   const self = Math.min(kwh, DAILY_CONS);
@@ -66,23 +66,23 @@ export default function App() {
       {date:"2026-08-16",kwh:119},
       {date:"2026-08-17",kwh:112},
       {date:"2026-08-18",kwh:115},
-      {date:"2026-08-19",kwh:120},
-      {date:"2026-08-20",kwh:114},
-      {date:"2026-08-21",kwh:114},
+      {date:"2026-08-19",kwh:124},
+      {date:"2026-08-20",kwh:118},
+      {date:"2026-08-21",kwh:117},
       {date:"2026-08-22",kwh:114},
-      {date:"2026-08-23",kwh:114},
-      {date:"2026-08-24",kwh:114},
-      {date:"2026-08-25",kwh:114},
-      {date:"2026-08-26",kwh:114},
-      {date:"2026-08-27",kwh:114},
+      {date:"2026-08-23",kwh:117},
+      {date:"2026-08-24",kwh:119},
+      {date:"2026-08-25",kwh:120},
+      {date:"2026-08-26",kwh:115},
+      {date:"2026-08-27",kwh:113},
       {date:"2026-08-28",kwh:114},
-      {date:"2026-08-29",kwh:114},
-      {date:"2026-08-30",kwh:114},
-      {date:"2026-08-31",kwh:114},
-      {date:"2026-09-01",kwh:114},
-      {date:"2026-09-02",kwh:114},
-      {date:"2026-09-03",kwh:114},
-      {date:"2026-09-04",kwh:114},
+      {date:"2026-08-29",kwh:111},
+      {date:"2026-08-30",kwh:105},
+      {date:"2026-08-31",kwh:85},
+      {date:"2026-09-01",kwh:110},
+      {date:"2026-09-02",kwh:107},
+      {date:"2026-09-03",kwh:106},
+      {date:"2026-09-04",kwh:111},
     ];
     saveLog(seed); return seed;
   });
@@ -168,7 +168,6 @@ Mobile: read status bar clock. Web: read date from header. Convert Wh to kWh (38
 
   return (
     <div style={{minHeight:"100vh",background:"#0B1120",color:"#fff",fontFamily:"SF Pro Display,-apple-system,sans-serif",direction:"rtl",padding:"16px 14px 32px",maxWidth:430,margin:"0 auto"}}>
-
       <div style={{marginBottom:18}}>
         <div style={{fontSize:10,color:"#10D98A",letterSpacing:1.5,marginBottom:4,display:"flex",alignItems:"center",gap:6}}>
           <span style={{width:6,height:6,borderRadius:"50%",background:"#10D98A",display:"inline-block",boxShadow:"0 0 8px #10D98A"}}/>
