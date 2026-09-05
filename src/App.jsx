@@ -1,331 +1,3 @@
-  1
-  2
-  3
-  4
-  5
-  6
-  7
-  8
-  9
- 10
- 11
- 12
- 13
- 14
- 15
- 16
- 17
- 18
- 19
- 20
- 21
- 22
- 23
- 24
- 25
- 26
- 27
- 28
- 29
- 30
- 31
- 32
- 33
- 34
- 35
- 36
- 37
- 38
- 39
- 40
- 41
- 42
- 43
- 44
- 45
- 46
- 47
- 48
- 49
- 50
- 51
- 52
- 53
- 54
- 55
- 56
- 57
- 58
- 59
- 60
- 61
- 62
- 63
- 64
- 65
- 66
- 67
- 68
- 69
- 70
- 71
- 72
- 73
- 74
- 75
- 76
- 77
- 78
- 79
- 80
- 81
- 82
- 83
- 84
- 85
- 86
- 87
- 88
- 89
- 90
- 91
- 92
- 93
- 94
- 95
- 96
- 97
- 98
- 99
-100
-101
-102
-103
-104
-105
-106
-107
-108
-109
-110
-111
-112
-113
-114
-115
-116
-117
-118
-119
-120
-121
-122
-123
-124
-125
-126
-127
-128
-129
-130
-131
-132
-133
-134
-135
-136
-137
-138
-139
-140
-141
-142
-143
-144
-145
-146
-147
-148
-149
-150
-151
-152
-153
-154
-155
-156
-157
-158
-159
-160
-161
-162
-163
-164
-165
-166
-167
-168
-169
-170
-171
-172
-173
-174
-175
-176
-177
-178
-179
-180
-181
-182
-183
-184
-185
-186
-187
-188
-189
-190
-191
-192
-193
-194
-195
-196
-197
-198
-199
-200
-201
-202
-203
-204
-205
-206
-207
-208
-209
-210
-211
-212
-213
-214
-215
-216
-217
-218
-219
-220
-221
-222
-223
-224
-225
-226
-227
-228
-229
-230
-231
-232
-233
-234
-235
-236
-237
-238
-239
-240
-241
-242
-243
-244
-245
-246
-247
-248
-249
-250
-251
-252
-253
-254
-255
-256
-257
-258
-259
-260
-261
-262
-263
-264
-265
-266
-267
-268
-269
-270
-271
-272
-273
-274
-275
-276
-277
-278
-279
-280
-281
-282
-283
-284
-285
-286
-287
-288
-289
-290
-291
-292
-293
-294
-295
-296
-297
-298
-299
-300
-301
-302
-303
-304
-305
-306
-307
-308
-309
-310
-311
-312
-313
-314
-315
-316
-317
-318
-319
-320
-321
-322
-323
-324
-325
-326
-327
-328
 import { useState, useRef } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Cell, AreaChart, Area, CartesianGrid } from "recharts";
 
@@ -337,12 +9,12 @@ const MONTHLY_BILL  = 1000;
 const MONTHLY_SOLAR_INCOME = 1652;
 const DAILY_CONS    = 52;
 const SYSTEM_KWP    = 22.4;
-const INSTALL_DATE  = "2026-07-07";
+const INSTALL_DATE  = "2026-08-13";
 const TESCO_ANNUAL  = 17741;
 const TESCO_PAYBACK = 4.5;
 const SUNRISE = 6, SUNSET = 19.5;
-const STORAGE_KEY  = "solar_v7_log";
-const INTRADAY_KEY = "solar_v7_intra";
+const STORAGE_KEY  = "solar_v8_log";
+const INTRADAY_KEY = "solar_v8_intra";
 
 function calcValue(kwh) {
   const self = Math.min(kwh, DAILY_CONS);
@@ -350,10 +22,10 @@ function calcValue(kwh) {
   return self * TARIFF_BUY + exp * TARIFF_SELL;
 }
 
-function loadLog()      { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)  || "[]"); } catch { return []; } }
-function saveLog(l)     { try { localStorage.setItem(STORAGE_KEY,  JSON.stringify(l)); } catch {} }
-function loadIntra()    { try { return JSON.parse(localStorage.getItem(INTRADAY_KEY) || "{}"); } catch { return {}; } }
-function saveIntra(d)   { try { localStorage.setItem(INTRADAY_KEY, JSON.stringify(d)); } catch {} }
+function loadLog()    { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)  || "[]"); } catch { return []; } }
+function saveLog(l)   { try { localStorage.setItem(STORAGE_KEY,  JSON.stringify(l)); } catch {} }
+function loadIntra()  { try { return JSON.parse(localStorage.getItem(INTRADAY_KEY) || "{}"); } catch { return {}; } }
+function saveIntra(d) { try { localStorage.setItem(INTRADAY_KEY, JSON.stringify(d)); } catch {} }
 
 const MO = ["ינו","פבר","מרץ","אפר","מאי","יונ","יול","אוג","ספט","אוק","נוב","דצמ"];
 const fmt = (n, d=0) => (n == null || isNaN(n) || !isFinite(n)) ? "—" : n.toLocaleString("he-IL",{maximumFractionDigits:d});
@@ -368,14 +40,14 @@ const project = readings => {
   return f<=0 ? null : last.kwh/f;
 };
 
-const dayColor = kwh => kwh >= 100 ? "#00FFB3" : kwh >= 85 ? "#10D98A" : kwh >= 70 ? "#F59E0B" : kwh >= 50 ? "#F97316" : "#EF4444";
-const dayEmoji = kwh => kwh >= 100 ? "😎" : kwh >= 85 ? "✅" : kwh >= 70 ? "🟡" : "🔴";
+const dayColor = kwh => kwh>=100?"#00FFB3":kwh>=85?"#10D98A":kwh>=70?"#F59E0B":kwh>=50?"#F97316":"#EF4444";
+const dayEmoji = kwh => kwh>=100?"😎":kwh>=85?"✅":kwh>=70?"🟡":"🔴";
 
 const Tip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   const kwh = payload.find(p=>p.dataKey==="kwh");
   return (
-    <div style={{background:"#1C2437",border:"1px solid #2a2a2a",borderRadius:10,padding:"10px 14px",fontSize:12,direction:"rtl"}}>
+    <div style={{background:"#1C2437",border:"1px solid #2A3A58",borderRadius:10,padding:"10px 14px",fontSize:12,direction:"rtl"}}>
       <div style={{color:"#8A9BBF",marginBottom:4}}>{label}</div>
       {kwh && <><div style={{color:dayColor(kwh.value),fontWeight:700}}>{dayEmoji(kwh.value)} {fmt(kwh.value,1)} kWh</div><div style={{color:"#F59E0B",fontWeight:600}}>{fmt(calcValue(kwh.value),1)} ₪</div></>}
     </div>
@@ -387,7 +59,15 @@ export default function App() {
   const [log, setLog] = useState(() => {
     const ex = loadLog();
     if (ex.length) return ex;
-    const seed = [{date:"2026-08-13",kwh:113},{date:"2026-08-14",kwh:115},{date:"2026-08-15",kwh:120},{date:"2026-08-16",kwh:119},{date:"2026-08-17",kwh:112},{date:"2026-08-18",kwh:115},{date:"2026-08-19",kwh:120}];
+    const seed = [
+      {date:"2026-08-13",kwh:113},
+      {date:"2026-08-14",kwh:115},
+      {date:"2026-08-15",kwh:120},
+      {date:"2026-08-16",kwh:119},
+      {date:"2026-08-17",kwh:112},
+      {date:"2026-08-18",kwh:115},
+      {date:"2026-08-19",kwh:120},
+    ];
     saveLog(seed); return seed;
   });
   const [intra,setIntra]=useState(()=>loadIntra());
@@ -418,14 +98,27 @@ export default function App() {
       const b64=e.target.result.split(",")[1];
       setThumb(e.target.result);
       try{
-        const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:300,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:file.type||"image/jpeg",data:b64}},{type:"text",text:`Extract solar production data from this SolarEdge screenshot (mobile app OR web portal). Return ONLY valid JSON: {"kwh":<today total kWh>,"time_hour":<decimal hour from status bar>,"date":"<YYYY-MM-DD>"}. Convert Wh to kWh. Mobile: read status bar clock. Web: read date from header.`}]}]})});
+        const res=await fetch("https://api.anthropic.com/v1/messages",{
+          method:"POST",
+          headers:{"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+          body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:300,messages:[{role:"user",content:[
+            {type:"image",source:{type:"base64",media_type:file.type||"image/jpeg",data:b64}},
+            {type:"text",text:`Extract solar production data from SolarEdge screenshot. Return ONLY JSON:
+{"kwh":<today kWh, convert Wh to kWh>,"time_hour":<decimal hour from status bar>,"date":"<YYYY-MM-DD>"}
+Mobile: read status bar clock. Web: read date from header. Convert Wh to kWh (386 Wh = 0.386 kWh).`}
+          ]}]})
+        });
         if(!res.ok){const err=await res.json().catch(()=>({}));setFlash(`שגיאת API ${res.status}: ${err?.error?.message||"בדוק חיבור"}`);setBusy(false);return;}
         const data=await res.json();
         if(data.error){setFlash(`שגיאה: ${data.error.message}`);setBusy(false);return;}
         const txt=data.content?.[0]?.text?.replace(/```json|```/g,"").trim()||"{}";
         let p={};
         try{p=JSON.parse(txt);}catch{setFlash(`שגיאת פענוח: ${txt.slice(0,50)}`);setBusy(false);return;}
-        if(p.kwh){const h=p.time_hour||nowH();const d=p.date||today;addReading(h,p.kwh,d);const pr=project([...(intra[d]||[]),{hour:h,kwh:p.kwh}]);setFlash(`✓ ${fmt(p.kwh,1)} kWh · ${tlabel(h)}${pr?` · צפי: ~${fmt(pr,0)} kWh`:""}`);}
+        if(p.kwh){
+          const h=p.time_hour||nowH();const d=p.date||today;
+          addReading(h,p.kwh,d);
+          const pr=project([...(intra[d]||[]),{hour:h,kwh:p.kwh}]);
+          setFlash(`✓ ${fmt(p.kwh,1)} kWh · ${tlabel(h)}${pr?` · צפי: ~${fmt(pr,0)} kWh`:""}`);}
         else{setFlash(`לא זיהיתי: ${txt.slice(0,60)}`);}
       }catch(err){setFlash(`שגיאה: ${err.message||"בדוק חיבור"}`);}
       setTimeout(()=>setFlash(null),5000);setBusy(false);
@@ -443,7 +136,7 @@ export default function App() {
   const loanPct=Math.min(100,(totalVal/LOAN_AMOUNT)*100);
   const monthlyInc=calcValue(avgKwh)*30;
   const annualInc=calcValue(avgKwh)*365;
-  const coverage=Math.min(100,(monthlyInc/LOAN_MONTHLY)*100);
+  const payback=annualInc>0?LOAN_AMOUNT/annualInc:null;
   const actualCoverage=Math.min(100,(MONTHLY_SOLAR_INCOME/LOAN_MONTHLY)*100);
   const actualPayback=MONTHLY_SOLAR_INCOME>0?LOAN_AMOUNT/(MONTHLY_SOLAR_INCOME*12):null;
   const projPayback=annualInc>0?LOAN_AMOUNT/annualInc:null;
@@ -457,7 +150,7 @@ export default function App() {
   const CARD=({label,val,unit,sub,accent,color})=>(<div style={{flex:1,background:accent?"#0A2A1E":"#111827",borderRadius:12,padding:"13px 10px",border:`1px solid ${accent?"#10D98A":"#243048"}`}}><div style={{color:"#6B7FA3",fontSize:10,marginBottom:4}}>{label}</div><div style={{color:color||(accent?"#10D98A":"#fff"),fontSize:19,fontWeight:700,lineHeight:1}}>{val}</div><div style={{color:"#5A6E8C",fontSize:10,marginTop:3}}>{unit}{sub?` · ${sub}`:""}</div></div>);
 
   return (
-    <div style={{minHeight:"100vh",background:"#0B1120",color:"#fff",fontFamily:"SF Pro Display,-apple-system,BlinkMacSystemFont,sans-serif",direction:"rtl",padding:"16px 14px 32px",maxWidth:430,margin:"0 auto"}}>
+    <div style={{minHeight:"100vh",background:"#0B1120",color:"#fff",fontFamily:"SF Pro Display,-apple-system,sans-serif",direction:"rtl",padding:"16px 14px 32px",maxWidth:430,margin:"0 auto"}}>
 
       <div style={{marginBottom:18}}>
         <div style={{fontSize:10,color:"#10D98A",letterSpacing:1.5,marginBottom:4,display:"flex",alignItems:"center",gap:6}}>
@@ -468,10 +161,11 @@ export default function App() {
         <div style={{color:"#4A5E7A",fontSize:11,marginTop:2}}>מאז {dlabel(INSTALL_DATE)} · {log.length} ימי נתונים · ממוצע {fmt(avgKwh,1)} kWh/יום</div>
       </div>
 
+      {/* Summary */}
       <div style={{background:"linear-gradient(135deg,#0A2A1E,#0B1A2E)",borderRadius:16,padding:16,marginBottom:16,border:"1px solid #10D98A"}}>
         <div style={{color:"#10D98A",fontSize:10,letterSpacing:1.5,marginBottom:12}}>סיכום מצטבר · {pastDays.length} ימים מלאים</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:12}}>
-          {[{label:"ממוצע יומי",val:`${fmt(avgKwh,1)} kWh`,sub:pastDays.length>0?`${fmt(calcValue(avgKwh),1)} ₪/יום`:"—"},{label:"סה״כ ייצור",val:`${fmt(totalKwh,0)} kWh`,sub:`${fmt(totalVal,0)} ₪`},{label:"הכנסה חודשית",val:`${fmt(MONTHLY_SOLAR_INCOME,0)} ₪`,sub:"בפועל"}].map((k,i)=>(
+          {[{label:"ממוצע יומי",val:`${fmt(avgKwh,1)} kWh`,sub:`${fmt(calcValue(avgKwh),1)} ₪/יום`},{label:"סה״כ ייצור",val:`${fmt(totalKwh,0)} kWh`,sub:`${fmt(totalVal,0)} ₪`},{label:"הכנסה חודשית",val:`${fmt(MONTHLY_SOLAR_INCOME,0)} ₪`,sub:"בפועל"}].map((k,i)=>(
             <div key={i} style={{background:"#0D1A2E",borderRadius:10,padding:"10px 8px",border:"1px solid #1a3a1a"}}>
               <div style={{color:"#6B7FA3",fontSize:9,marginBottom:4}}>{k.label}</div>
               <div style={{color:"#10D98A",fontSize:14,fontWeight:700,lineHeight:1}}>{k.val}</div>
@@ -480,15 +174,16 @@ export default function App() {
           ))}
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-          {[{label:"שנתי צפוי",val:`${fmt(annualInc,0)} ₪`,color:"#10D98A"},{label:"החזר הלוואה",val:projPayback?`${projPayback.toFixed(1)} שנים`:"—",color:projPayback&&projPayback<=4.5?"#10D98A":"#F59E0B"}].map((k,i)=>(
+          {[{label:"שנתי צפוי",val:`${fmt(annualInc,0)} ₪`,color:"#10D98A"},{label:"החזר הלוואה",val:payback?`${payback.toFixed(1)} שנים`:"—",color:payback&&payback<=4.5?"#10D98A":"#F59E0B"}].map((k,i)=>(
             <div key={i} style={{background:"#0D1A2E",borderRadius:10,padding:"10px 8px",border:"1px solid #1a3a1a",textAlign:"center"}}>
               <div style={{color:"#6B7FA3",fontSize:9,marginBottom:4}}>{k.label}</div>
-              <div style={{color:k.color||"#fff",fontSize:16,fontWeight:700}}>{k.val}</div>
+              <div style={{color:k.color,fontSize:16,fontWeight:700}}>{k.val}</div>
             </div>
           ))}
         </div>
       </div>
 
+      {/* Upload */}
       <div onClick={()=>fileRef.current.click()} style={{background:busy?"#0A2018":"#111827",border:`1.5px dashed ${busy?"#10D98A":"#243048"}`,borderRadius:14,padding:"13px 16px",marginBottom:10,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
         <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>e.target.files[0]&&analyzeImage(e.target.files[0])}/>
         <div style={{fontSize:20}}>{busy?"⚡":"📲"}</div>
@@ -506,6 +201,7 @@ export default function App() {
 
       {flash&&<div style={{background:"#0A2A1E",border:"1px solid #10D98A",borderRadius:10,padding:"10px 13px",marginBottom:14,fontSize:12,color:"#10D98A",lineHeight:1.5}}>{flash}</div>}
 
+      {/* Today */}
       {todayR.length>0&&(
         <div style={{background:"#111827",borderRadius:14,padding:14,marginBottom:14,border:"1px solid #243048"}}>
           <div style={{color:"#5A6E8C",fontSize:10,marginBottom:10}}>היום · {todayR.length} קריאות</div>
@@ -523,6 +219,7 @@ export default function App() {
 
       <div style={{display:"flex",gap:6,marginBottom:14}}>{TAB("today","היום")}{TAB("week","שבוע")}{TAB("roi","ROI")}</div>
 
+      {/* Today chart */}
       {view==="today"&&readPts.length>1&&(
         <div style={{background:"#111827",borderRadius:14,padding:"16px 10px 10px",border:"1px solid #243048",marginBottom:14}}>
           <div style={{color:"#6B7FA3",fontSize:10,marginBottom:12,paddingRight:4}}>קריאות היום · kWh מצטבר</div>
@@ -540,6 +237,7 @@ export default function App() {
         </div>
       )}
 
+      {/* Week */}
       {view==="week"&&barData.length>0&&(
         <>
         <div style={{background:"#111827",borderRadius:14,padding:"16px 10px 10px",border:"1px solid #243048",marginBottom:10}}>
@@ -557,7 +255,7 @@ export default function App() {
               <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=barData.find(b=>b.label===label);return<div style={{background:"#1C2437",border:"1px solid #2A3A58",borderRadius:10,padding:"8px 12px",fontSize:11,direction:"rtl"}}><div style={{color:"#6B7FA3",marginBottom:4}}>{label}</div><div style={{color:dayColor(d?.kwh||0),fontWeight:700}}>{dayEmoji(d?.kwh||0)} {fmt(d?.kwh,1)} kWh</div><div style={{color:"#F59E0B",fontWeight:600}}>{fmt(d?.val,0)} ₪</div></div>;}} cursor={{fill:"#ffffff04"}}/>
               {chartMode==="kwh"&&<ReferenceLine y={100} stroke="#00FFB3" strokeDasharray="3 3" strokeWidth={1} label={{value:"😎 100",fill:"#00FFB3",fontSize:9,position:"right"}}/>}
               {chartMode==="kwh"&&<ReferenceLine y={85} stroke="#F59E0B" strokeDasharray="3 3" strokeWidth={1} label={{value:"יעד",fill:"#F59E0B",fontSize:9,position:"right"}}/>}
-              <Bar dataKey={chartMode} name={chartMode==="kwh"?"kWh":"₪"} radius={[5,5,0,0]} label={{position:"insideTop",formatter:(v,i)=>chartMode==="kwh"?`${fmt(v,0)}`:`${fmt(v,0)}₪`,fontSize:10,fill:"#000",fontWeight:900,dy:8}}>
+              <Bar dataKey={chartMode} name={chartMode==="kwh"?"kWh":"₪"} radius={[5,5,0,0]} label={{position:"insideTop",formatter:(v)=>chartMode==="kwh"?`${fmt(v,0)}`:`${fmt(v,0)}₪`,fontSize:10,fill:"#000",fontWeight:900,dy:8}}>
                 {barData.map((e,i)=><Cell key={i} fill={chartMode==="kwh"?dayColor(e.kwh):"#F59E0B"}/>)}
               </Bar>
             </BarChart>
@@ -568,7 +266,7 @@ export default function App() {
         </div>
         <div style={{background:"#111827",borderRadius:14,padding:14,border:"1px solid #243048",marginBottom:14}}>
           <div style={{color:"#5A6E8C",fontSize:10,marginBottom:12}}>סיכום כספי · לפי הסכם טסקו</div>
-          <div style={{color:"#4A5E7A",fontSize:9,marginBottom:12}}>צריכה עצמית: {TARIFF_BUY} ₪/kWh · עודף: {TARIFF_SELL} ₪/kWh · צריכה: {DAILY_CONS} kWh/יום</div>
+          <div style={{color:"#4A5E7A",fontSize:9,marginBottom:12}}>צריכה עצמית: {TARIFF_BUY} ₪/kWh · עודף: {TARIFF_SELL} ₪/kWh</div>
           {[{label:"שבועי",kwh:fmt(wTotal,0),val:fmt(wValue,0)},{label:"חודשי (צפי)",kwh:fmt(avgKwh*30,0),val:fmt(monthlyInc,0)},{label:"שנתי (צפי)",kwh:fmt(avgKwh*365,0),val:fmt(annualInc,0)}].map((r,i)=>(
             <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingBottom:i<2?10:0,marginBottom:i<2?10:0,borderBottom:i<2?"1px solid #1C2437":"none"}}>
               <div><div style={{color:"#B0C0D8",fontSize:13}}>{r.label}</div><div style={{color:"#5A6E8C",fontSize:10}}>{r.kwh} kWh</div></div>
@@ -579,11 +277,11 @@ export default function App() {
         </>
       )}
 
+      {/* ROI */}
       {view==="roi"&&(
         <>
         <div style={{background:"#111827",borderRadius:14,padding:"16px 10px 10px",border:"1px solid #243048",marginBottom:10}}>
           <div style={{color:"#6B7FA3",fontSize:10,marginBottom:2,paddingRight:4}}>הלוואה מול הכנסת סולרי · 5 שנים</div>
-          <div style={{color:"#4A5E7A",fontSize:9,marginBottom:12,paddingRight:4}}>נקודת האיזון — כשהסולרי מכסה את ההלוואה</div>
           <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={Array.from({length:61},(_,m)=>({label:m===0?"0":m===6?"6":m===12?"12":m===18?"18":m===24?"24":m===30?"30":m===36?"36":m===42?"42":m===48?"48":m===54?"54":m===60?"60":"",month:m,loan:Math.max(0,Math.round(LOAN_MONTHLY*60-m*LOAN_MONTHLY)),solar:Math.round(MONTHLY_SOLAR_INCOME*m),projected:Math.round(monthlyInc*m)}))}>
               <defs>
@@ -606,14 +304,11 @@ export default function App() {
           </div>
         </div>
         <div style={{background:"#111827",borderRadius:14,padding:14,border:"1px solid #243048",marginBottom:14}}>
-          <div style={{color:"#5A6E8C",fontSize:10,marginBottom:14}}>תחזית · ממוצע {fmt(avgKwh,1)} kWh/יום ({pastDays.length} ימים)</div>
+          <div style={{color:"#5A6E8C",fontSize:10,marginBottom:14}}>תחזית · ממוצע {fmt(avgKwh,1)} kWh/יום · {pastDays.length} ימים</div>
           {[
-            {label:"חשבון חשמל חודשי",val:fmt(MONTHLY_BILL,0),unit:"₪/חודש",sub:`~${DAILY_CONS} kWh/יום`},
             {label:"הכנסה בפועל",val:fmt(MONTHLY_SOLAR_INCOME,0),unit:"₪/חודש",sub:`${fmt(MONTHLY_SOLAR_INCOME/30,1)} ₪/יום`,color:"#10D98A"},
-            {label:"הכנסה חודשית (צפי)",val:fmt(monthlyInc,0),unit:"₪/חודש",color:monthlyInc>=LOAN_MONTHLY?"#10D98A":"#F59E0B"},
             {label:"החזר הלוואה",val:fmt(LOAN_MONTHLY,0),unit:"₪/חודש",sub:"5 שנים · פריים-0.1%"},
             {label:"כיסוי הלוואה (בפועל)",val:fmt(actualCoverage,1),unit:"%",highlight:true,color:actualCoverage>=100?"#10D98A":"#F59E0B"},
-            {label:"עודף/גרעון",val:(monthlyInc>=LOAN_MONTHLY?"+":"")+fmt(monthlyInc-LOAN_MONTHLY,0),unit:"₪/חודש",color:monthlyInc>=LOAN_MONTHLY?"#10D98A":"#EF4444"},
             {label:"הכנסה שנתית (צפי)",val:fmt(annualInc,0),unit:"₪/שנה",color:annualInc>=TESCO_ANNUAL?"#10D98A":"#F59E0B"},
             {label:"תחזית טסקו",val:fmt(TESCO_ANNUAL,0),unit:"₪/שנה",sub:"בסיס חוזה"},
             {label:"פער מתחזית",val:(annualInc>=TESCO_ANNUAL?"+":"")+fmt(annualInc-TESCO_ANNUAL,0),unit:"₪/שנה",color:annualInc>=TESCO_ANNUAL?"#10D98A":"#EF4444"},
@@ -630,6 +325,7 @@ export default function App() {
         </>
       )}
 
+      {/* Loan balance */}
       <div style={{background:"#111827",borderRadius:14,padding:14,border:"1px solid #243048",marginBottom:10}}>
         <div style={{color:"#8A9BBF",fontSize:11,marginBottom:10}}>יתרת הלוואה בפועל — מהבנק</div>
         <div style={{display:"flex",gap:8,marginBottom:loanBalance?10:0}}>
@@ -639,18 +335,19 @@ export default function App() {
         {loanBalance!==null&&(<div>
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{color:"#8A9BBF",fontSize:12}}>נשאר לשלם</span><span style={{color:"#F59E0B",fontSize:18,fontWeight:700}}>{fmt(loanBalance,0)} ₪</span></div>
           <div style={{background:"#1C2437",borderRadius:5,height:7,overflow:"hidden",marginBottom:6}}><div style={{width:`${Math.min(100,((LOAN_AMOUNT-loanBalance)/LOAN_AMOUNT)*100)}%`,background:"linear-gradient(90deg,#0A3D2A,#10D98A)",height:"100%",borderRadius:5}}/></div>
-          <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#4A5E7A",fontSize:10}}>שולם: {fmt(LOAN_AMOUNT-loanBalance,0)} ₪</span><span style={{color:"#4A5E7A",fontSize:10}}>{fmt(((LOAN_AMOUNT-loanBalance)/LOAN_AMOUNT)*100,1)}% מההלוואה</span></div>
-          {loanBalance>0&&MONTHLY_SOLAR_INCOME>0&&(<div style={{marginTop:8,padding:"8px 10px",background:"#0A2A1E",borderRadius:8,border:"1px solid #1a3a1a"}}><span style={{color:"#10D98A",fontSize:11}}>⚡ בקצב הנוכחי — עוד ~{fmt(loanBalance/MONTHLY_SOLAR_INCOME,1)} חודשים לסיום ההלוואה</span></div>)}
+          <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#4A5E7A",fontSize:10}}>שולם: {fmt(LOAN_AMOUNT-loanBalance,0)} ₪</span><span style={{color:"#4A5E7A",fontSize:10}}>{fmt(((LOAN_AMOUNT-loanBalance)/LOAN_AMOUNT)*100,1)}%</span></div>
+          {loanBalance>0&&MONTHLY_SOLAR_INCOME>0&&(<div style={{marginTop:8,padding:"8px 10px",background:"#0A2A1E",borderRadius:8,border:"1px solid #1a3a1a"}}><span style={{color:"#10D98A",fontSize:11}}>⚡ עוד ~{fmt(loanBalance/MONTHLY_SOLAR_INCOME,1)} חודשים לסיום ההלוואה</span></div>)}
         </div>)}
       </div>
 
+      {/* Loan bar */}
       <div style={{background:"#111827",borderRadius:14,padding:14,border:"1px solid #243048"}}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:7}}><span style={{color:"#8A9BBF",fontSize:12}}>החזר הלוואה · 79,800 ₪</span><span style={{color:"#F59E0B",fontSize:12,fontWeight:600}}>{fmt(loanPct,3)}%</span></div>
         <div style={{background:"#1C2437",borderRadius:5,height:7,overflow:"hidden",marginBottom:6}}><div style={{width:`${loanPct}%`,background:"linear-gradient(90deg,#0A3D2A,#10D98A)",height:"100%",borderRadius:5}}/></div>
         <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#4A5E7A",fontSize:10}}>נצבר: {fmt(totalVal,0)} ₪</span><span style={{color:"#4A5E7A",fontSize:10}}>נותר: {fmt(Math.max(0,LOAN_AMOUNT-totalVal),0)} ₪</span></div>
       </div>
 
-      <div style={{textAlign:"center",color:"#1C2437",fontSize:9,marginTop:14}}>טסקו אנרגיה · קנייה {TARIFF_BUY} ₪ · מכירה {TARIFF_SELL} ₪ · {SYSTEM_KWP} kWp</div>
+      <div style={{textAlign:"center",color:"#1C2437",fontSize:9,marginTop:14}}>טסקו אנרגיה · {TARIFF_BUY} ₪ קנייה · {TARIFF_SELL} ₪ מכירה · {SYSTEM_KWP} kWp</div>
     </div>
   );
 }
