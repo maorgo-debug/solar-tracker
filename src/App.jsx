@@ -13,8 +13,8 @@ const INSTALL_DATE  = "2026-08-13";
 const TESCO_ANNUAL  = 17741;
 const TESCO_PAYBACK = 4.5;
 const SUNRISE = 6, SUNSET = 19.5;
-const STORAGE_KEY  = "solar_v8_log";
-const INTRADAY_KEY = "solar_v8_intra";
+const STORAGE_KEY  = "solar_v9_log";
+const INTRADAY_KEY = "solar_v9_intra";
 
 function calcValue(kwh) {
   const self = Math.min(kwh, DAILY_CONS);
@@ -67,6 +67,22 @@ export default function App() {
       {date:"2026-08-17",kwh:112},
       {date:"2026-08-18",kwh:115},
       {date:"2026-08-19",kwh:120},
+      {date:"2026-08-20",kwh:114},
+      {date:"2026-08-21",kwh:114},
+      {date:"2026-08-22",kwh:114},
+      {date:"2026-08-23",kwh:114},
+      {date:"2026-08-24",kwh:114},
+      {date:"2026-08-25",kwh:114},
+      {date:"2026-08-26",kwh:114},
+      {date:"2026-08-27",kwh:114},
+      {date:"2026-08-28",kwh:114},
+      {date:"2026-08-29",kwh:114},
+      {date:"2026-08-30",kwh:114},
+      {date:"2026-08-31",kwh:114},
+      {date:"2026-09-01",kwh:114},
+      {date:"2026-09-02",kwh:114},
+      {date:"2026-09-03",kwh:114},
+      {date:"2026-09-04",kwh:114},
     ];
     saveLog(seed); return seed;
   });
@@ -137,6 +153,7 @@ Mobile: read status bar clock. Web: read date from header. Convert Wh to kWh (38
   const monthlyInc=calcValue(avgKwh)*30;
   const annualInc=calcValue(avgKwh)*365;
   const payback=annualInc>0?LOAN_AMOUNT/annualInc:null;
+  const coverage=Math.min(100,(monthlyInc/LOAN_MONTHLY)*100);
   const actualCoverage=Math.min(100,(MONTHLY_SOLAR_INCOME/LOAN_MONTHLY)*100);
   const actualPayback=MONTHLY_SOLAR_INCOME>0?LOAN_AMOUNT/(MONTHLY_SOLAR_INCOME*12):null;
   const projPayback=annualInc>0?LOAN_AMOUNT/annualInc:null;
@@ -161,7 +178,6 @@ Mobile: read status bar clock. Web: read date from header. Convert Wh to kWh (38
         <div style={{color:"#4A5E7A",fontSize:11,marginTop:2}}>מאז {dlabel(INSTALL_DATE)} · {log.length} ימי נתונים · ממוצע {fmt(avgKwh,1)} kWh/יום</div>
       </div>
 
-      {/* Summary */}
       <div style={{background:"linear-gradient(135deg,#0A2A1E,#0B1A2E)",borderRadius:16,padding:16,marginBottom:16,border:"1px solid #10D98A"}}>
         <div style={{color:"#10D98A",fontSize:10,letterSpacing:1.5,marginBottom:12}}>סיכום מצטבר · {pastDays.length} ימים מלאים</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:12}}>
@@ -183,7 +199,6 @@ Mobile: read status bar clock. Web: read date from header. Convert Wh to kWh (38
         </div>
       </div>
 
-      {/* Upload */}
       <div onClick={()=>fileRef.current.click()} style={{background:busy?"#0A2018":"#111827",border:`1.5px dashed ${busy?"#10D98A":"#243048"}`,borderRadius:14,padding:"13px 16px",marginBottom:10,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
         <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>e.target.files[0]&&analyzeImage(e.target.files[0])}/>
         <div style={{fontSize:20}}>{busy?"⚡":"📲"}</div>
@@ -201,7 +216,6 @@ Mobile: read status bar clock. Web: read date from header. Convert Wh to kWh (38
 
       {flash&&<div style={{background:"#0A2A1E",border:"1px solid #10D98A",borderRadius:10,padding:"10px 13px",marginBottom:14,fontSize:12,color:"#10D98A",lineHeight:1.5}}>{flash}</div>}
 
-      {/* Today */}
       {todayR.length>0&&(
         <div style={{background:"#111827",borderRadius:14,padding:14,marginBottom:14,border:"1px solid #243048"}}>
           <div style={{color:"#5A6E8C",fontSize:10,marginBottom:10}}>היום · {todayR.length} קריאות</div>
@@ -219,7 +233,6 @@ Mobile: read status bar clock. Web: read date from header. Convert Wh to kWh (38
 
       <div style={{display:"flex",gap:6,marginBottom:14}}>{TAB("today","היום")}{TAB("week","שבוע")}{TAB("roi","ROI")}</div>
 
-      {/* Today chart */}
       {view==="today"&&readPts.length>1&&(
         <div style={{background:"#111827",borderRadius:14,padding:"16px 10px 10px",border:"1px solid #243048",marginBottom:14}}>
           <div style={{color:"#6B7FA3",fontSize:10,marginBottom:12,paddingRight:4}}>קריאות היום · kWh מצטבר</div>
@@ -237,7 +250,6 @@ Mobile: read status bar clock. Web: read date from header. Convert Wh to kWh (38
         </div>
       )}
 
-      {/* Week */}
       {view==="week"&&barData.length>0&&(
         <>
         <div style={{background:"#111827",borderRadius:14,padding:"16px 10px 10px",border:"1px solid #243048",marginBottom:10}}>
@@ -277,7 +289,6 @@ Mobile: read status bar clock. Web: read date from header. Convert Wh to kWh (38
         </>
       )}
 
-      {/* ROI */}
       {view==="roi"&&(
         <>
         <div style={{background:"#111827",borderRadius:14,padding:"16px 10px 10px",border:"1px solid #243048",marginBottom:10}}>
@@ -325,7 +336,6 @@ Mobile: read status bar clock. Web: read date from header. Convert Wh to kWh (38
         </>
       )}
 
-      {/* Loan balance */}
       <div style={{background:"#111827",borderRadius:14,padding:14,border:"1px solid #243048",marginBottom:10}}>
         <div style={{color:"#8A9BBF",fontSize:11,marginBottom:10}}>יתרת הלוואה בפועל — מהבנק</div>
         <div style={{display:"flex",gap:8,marginBottom:loanBalance?10:0}}>
@@ -340,7 +350,6 @@ Mobile: read status bar clock. Web: read date from header. Convert Wh to kWh (38
         </div>)}
       </div>
 
-      {/* Loan bar */}
       <div style={{background:"#111827",borderRadius:14,padding:14,border:"1px solid #243048"}}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:7}}><span style={{color:"#8A9BBF",fontSize:12}}>החזר הלוואה · 79,800 ₪</span><span style={{color:"#F59E0B",fontSize:12,fontWeight:600}}>{fmt(loanPct,3)}%</span></div>
         <div style={{background:"#1C2437",borderRadius:5,height:7,overflow:"hidden",marginBottom:6}}><div style={{width:`${loanPct}%`,background:"linear-gradient(90deg,#0A3D2A,#10D98A)",height:"100%",borderRadius:5}}/></div>
